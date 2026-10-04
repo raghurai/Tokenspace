@@ -1,0 +1,165 @@
+{
+  "bg": {
+    "page": {
+      "$type": "color",
+      "$value": "{color.neutral.900}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/900"
+        }
+      }
+    },
+    "raised": {
+      "$type": "color",
+      "$value": "{color.neutral.800}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/800"
+        }
+      }
+    },
+    "sunken": {
+      "$type": "color",
+      "$value": "{color.neutral.900}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/900"
+        }
+      }
+    },
+    "inverse": {
+      "$type": "color",
+      "$value": "{color.neutral.50}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/50"
+        }
+      }
+    }
+  },
+  "text": {
+    "default": {
+      "$type": "color",
+      "$value": "{color.neutral.50}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/50"
+        }
+      }
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "{color.neutral.300}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/300"
+        }
+      }
+    },
+    "subtle": {
+      "$type": "color",
+      "$value": "{color.neutral.500}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/500"
+        }
+      }
+    },
+    "link": {
+      "$type": "color",
+      "$value": "{color.blue.300}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/blue/300"
+        }
+      }
+    }
+  },
+  "accent": {
+    "default": {
+      "$type": "color",
+      "$value": "{color.blue.400}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/blue/400"
+        }
+      }
+    },
+    "hover": {
+      "$type": "color",
+      "$value": "{color.blue.300}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/blue/300"
+        }
+      }
+    },
+    "subtle": {
+      "$type": "color",
+      "$value": "{color.blue.900}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/blue/900"
+        }
+      }
+    }
+  },
+  "feedback": {
+    "success": {
+      "$type": "color",
+      "$value": "{color.green.300}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/green/300"
+        }
+      }
+    },
+    "danger": {
+      "$type": "color",
+      "$value": "{color.red.300}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/red/300"
+        }
+      }
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{color.amber.500}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/amber/500"
+        }
+      }
+    }
+  },
+  "border": {
+    "default": {
+      "$type": "color",
+      "$value": "{color.neutral.700}",
+      "$extensions": {
+        "com.figma.aliasData": {
+          "targetVariableSetName": "Primitives",
+          "targetVariableName": "color/neutral/700"
+        }
+      }
+    }
+  },
+  "$extensions": {
+    "com.figma.modeName": "Dark"
+  }
+}

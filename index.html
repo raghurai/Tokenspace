@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Token Space: your design system in 3D</title>
+<meta name="description" content="Drop in your Figma variable exports or design tokens and see your design system in 3D: OKLCH color space, ramps, light and dark mode shifts, spacing, type scale and radius.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E7EAEE; --panel:#F8F9FB; --field:#FFFFFF; --ink:#18202D; --muted:#5A6476;
+  --line:#CBD2DC; --accent:#2F4FE0; --accent-ink:#FFFFFF; --flag:#B5530A; --scene-line:#8E98A9;
+  --tip:#FFFFFF; --shadow:0 8px 28px rgba(24,32,45,.16);
+  --sans:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11151C; --panel:#181D26; --field:#0F131A; --ink:#E5E9F0; --muted:#8E98AA;
+    --line:#2A3140; --accent:#8FA2FF; --accent-ink:#0E1424; --flag:#F0A55A; --scene-line:#4C566A;
+    --tip:#1E2430; --shadow:0 10px 32px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11151C; --panel:#181D26; --field:#0F131A; --ink:#E5E9F0; --muted:#8E98AA;
+  --line:#2A3140; --accent:#8FA2FF; --accent-ink:#0E1424; --flag:#F0A55A; --scene-line:#4C566A;
+  --tip:#1E2430; --shadow:0 10px 32px rgba(0,0,0,.45);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:minmax(300px,370px) 1fr;height:100%}
+.panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:28px 24px 32px;display:flex;flex-direction:column;gap:28px}
+.brand h1{font-family:var(--serif);font-weight:400;font-size:40px;line-height:1;margin:0 0 10px;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);max-width:32ch}
+
+.input-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.input-head label{font-weight:600}
+.quiet{display:flex;gap:4px}
+.link-btn{background:none;border:0;padding:4px 6px;border-radius:6px;color:var(--accent);cursor:pointer;font-size:14px}
+.link-btn:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+textarea{width:100%;height:220px;resize:vertical;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;tab-size:2}
+.hint{color:var(--muted);font-size:13px;margin:8px 0 14px}
+.primary{width:100%;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:11px 16px;font-weight:600;cursor:pointer}
+.primary:hover{filter:brightness(1.07)}
+.sec{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 10px}
+.drop{border:1.5px dashed var(--line);border-radius:14px;padding:18px 16px 14px;background:var(--field);cursor:pointer;transition:border-color .15s,background-color .15s}
+.drop:hover,body.dropping .drop{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--field))}
+.drop-title{font-weight:600;margin:0 0 4px}
+.drop-hint{margin:0 0 14px;color:var(--muted);font-size:13px}
+.drop-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.secondary{background:var(--ink);color:var(--panel);border:0;border-radius:9px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:14px}
+body.dropping .stage::after{content:"Drop to add these files";position:absolute;inset:12px;border:2px dashed var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--accent);background:color-mix(in srgb,var(--bg) 70%,transparent);z-index:10;pointer-events:none}
+.cols{list-style:none;margin:14px 0 0;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cols li{padding:11px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.cols li:first-child{border-top:0}
+.c-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.c-name{font-weight:600;word-break:break-word}
+.c-meta{font-size:13px;color:var(--muted)}
+.c-mode{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.c-mode select{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:14px;color:var(--ink)}
+.paste{margin-top:14px}
+.paste summary{cursor:pointer;color:var(--accent);font-size:14px;padding:4px 0;margin-bottom:8px}
+#tip .modes-dl dd{display:flex;align-items:center;gap:6px}
+#tip .sw.sm{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend-shapes{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;color:var(--ink)}
+.status{font-size:13px;color:var(--muted);margin:10px 0 0;min-height:1.5em}
+.status.err{color:var(--flag)}
+
+.insights h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:0 0 12px;line-height:1.1}
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 18px}
+.counts div{background:var(--panel);padding:10px 8px;text-align:center}
+.counts b{display:block;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2}
+.counts span{font-size:12px;color:var(--muted)}
+.finding-group{margin:0 0 16px}
+.finding-group h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.finding-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.finding-group li{display:grid;grid-template-columns:10px 1fr;gap:10px;font-size:14px;line-height:1.45}
+.finding-group li::before{content:"";width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--scene-line)}
+.finding-group li.flag::before{background:var(--flag)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+
+.stage{position:relative;overflow:hidden;min-height:0}
+#wrap{position:absolute;inset:0}
+#scene{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#scene.dragging{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;white-space:nowrap;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;will-change:transform}
+.lbl.axis{font-size:12px}
+.lbl.row{font-weight:600;color:var(--ink);font-size:12.5px}
+.lbl.val{color:var(--ink)}
+
+.views{position:absolute;top:16px;left:16px;display:flex;flex-wrap:wrap;gap:2px;padding:3px;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;max-width:calc(100% - 32px)}
+.views button{border:0;background:none;padding:7px 12px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--muted);display:flex;gap:6px;align-items:baseline}
+.views button small{font-size:11.5px;font-variant-numeric:tabular-nums;opacity:.8}
+.views button[aria-selected="true"]{background:var(--ink);color:var(--panel)}
+.views button:disabled{opacity:.4;cursor:default}
+.legend{position:absolute;top:70px;left:16px;max-width:min(380px,calc(100% - 32px));font-size:13px;color:var(--muted);line-height:1.45;pointer-events:none}
+.controls{position:absolute;bottom:16px;right:16px;display:flex;gap:6px}
+.controls button{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-size:13px;cursor:pointer}
+.controls button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.gesture{position:absolute;bottom:20px;left:16px;font-size:12.5px;color:var(--muted);pointer-events:none}
+.empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:32px;text-align:center;color:var(--muted)}
+.empty.show{display:flex}
+.empty p{max-width:42ch;margin:0}
+
+#tip{position:absolute;left:0;top:0;z-index:5;min-width:200px;max-width:280px;background:var(--tip);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;font-size:13px;display:none;pointer-events:none}
+#tip.show{display:block}
+#tip.pinned{pointer-events:auto}
+#tip .t-name{font-weight:600;font-size:14px;word-break:break-all;margin-bottom:6px;display:flex;gap:10px;align-items:center}
+#tip .sw{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid var(--line)}
+#tip dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
+#tip dt{color:var(--muted)}
+#tip dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-all}
+#tip .note{margin-top:8px;color:var(--muted);font-size:12px}
+
+@media (max-width:860px){
+  body{height:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}
+  .stage{order:-1;height:66svh;min-height:380px;border-bottom:1px solid var(--line)}
+  .panel{border-right:0;overflow:visible}
+  .gesture{display:none}
+  .legend{top:auto;bottom:58px}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <h1>Token Space</h1>
+      <p>Drop in your Figma variables to see the system as a shape: where colors sit in perceptual space, how your scales step, and where they drift.</p>
+    </div>
+
+    <section class="source" aria-labelledby="src-h">
+      <h2 class="sec" id="src-h">Your tokens</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Add token files" aria-describedby="drop-hint">
+        <div class="drop-copy">
+          <p class="drop-title">Drop Figma variable exports</p>
+          <p class="drop-hint" id="drop-hint">JSON or ZIP. In Figma, open Variables, right-click a collection and choose Export modes. Drop every collection together so aliases between them resolve.</p>
+        </div>
+        <div class="drop-actions">
+          <button class="secondary" id="fileBtn" type="button">Choose files</button>
+          <button class="link-btn" id="sampleBtn" type="button">Try the sample export</button>
+        </div>
+        <input type="file" id="fileIn" multiple accept=".json,.zip,.tokens,.css,.scss,.txt" hidden>
+      </div>
+      <ul class="cols" id="cols" aria-label="Loaded collections" hidden></ul>
+      <details class="paste" id="pasteBox">
+        <summary>Paste JSON or CSS instead</summary>
+        <textarea id="src" spellcheck="false" autocomplete="off" aria-label="Pasted tokens" aria-describedby="src-hint" placeholder='{ "color": { "blue": { "500": { "$value": "#3D63E6" } } } }'></textarea>
+        <p class="hint" id="src-hint">Reads W3C/DTCG, Style Dictionary, Tokens Studio and flat JSON, or CSS custom properties. Pasted tokens are combined with any files above.</p>
+        <button class="primary" id="go" type="button">Visualize pasted tokens</button>
+      </details>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="insights" id="insights" aria-label="What the shape shows"></section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div id="wrap">
+      <canvas id="scene" tabindex="0" aria-label="3D view of design tokens. Drag or use arrow keys to orbit, plus and minus to zoom."></canvas>
+      <div id="labels"></div>
+    </div>
+    <div class="views" role="tablist" aria-label="View" id="views"></div>
+    <p class="legend" id="legend"></p>
+    <div class="empty" id="empty"><p id="emptyText"></p></div>
+    <p class="gesture">Drag to orbit. Scroll to zoom. Shift-drag to pan. Click a token to pin it.</p>
+    <div class="controls">
+      <button type="button" id="spinBtn" aria-pressed="false">Rotate</button>
+      <button type="button" id="resetBtn">Reset view</button>
+    </div>
+    <div id="tip" role="tooltip"></div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------------- Sample export (Figma "Export modes" format) ---------------- */
+function figmaColor(hex){
+  const n = parseInt(hex.slice(1), 16);
+  return { colorSpace: "srgb", components: [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255], alpha: 1, hex };
+}
+const fc = hex => ({ $type: "color", $value: figmaColor(hex) });
+const fnum = (v, scopes) => ({ $type: "number", $value: v, $extensions: { "com.figma.scopes": scopes } });
+const mapVals = (o, f) => Object.fromEntries(Object.entries(o).map(([k, x]) => [k, f(x)]));
+const falias = path => ({ $type: "color", $value: `{${path}}`, $extensions: { "com.figma.aliasData": { targetVariableSetName: "Primitives", targetVariableName: path.split(".").join("/") } } });
+
+const SAMPLE_PRIMITIVES = {
+  color: {
+    blue: mapVals({50:"#EEF4FF",100:"#D9E6FF",200:"#B8CFFF",300:"#8DB0FF",400:"#6088FA",500:"#3D63E6",600:"#2C4CC4",700:"#233C9C",800:"#1E3278",900:"#18265A"}, fc),
+    neutral: mapVals({0:"#FFFFFF",50:"#F6F7F9",100:"#ECEEF2",200:"#D9DDE4",300:"#BCC2CD",400:"#949CAB",500:"#6E7788",600:"#535B6B",700:"#3D4451",800:"#282D37",900:"#161A21"}, fc),
+    green: mapVals({100:"#DDF5E6",300:"#8EDBAE",500:"#2FA866",700:"#1C6E42",900:"#0F3C24"}, fc),
+    red: mapVals({100:"#FDE2E0",300:"#F7A39D",500:"#E2483D",600:"#E8584E",700:"#A82A21",900:"#5C1510"}, fc),
+    amber: mapVals({100:"#FFF1D1",300:"#FFD27A",500:"#F2A516",700:"#A86B05"}, fc),
+    violet: mapVals({200:"#DCD3FF",400:"#A38BFA",600:"#6E4FE0",800:"#3F2A92"}, fc),
+    brand: { accent: fc("#3E63E8") }
+  },
+  spacing: mapVals({0:0,1:4,2:8,3:12,4:16,5:24,6:32,8:48,10:64,12:96,"card-inset":30}, v => fnum(v, ["GAP","WIDTH_HEIGHT"])),
+  radius: mapVals({none:0,sm:4,md:8,lg:12,xl:20,full:9999}, v => fnum(v, ["CORNER_RADIUS"])),
+  "font-size": mapVals({xs:12,sm:14,md:16,lg:20,xl:24,"2xl":30,"3xl":36,"4xl":48,"5xl":60}, v => fnum(v, ["FONT_SIZE"])),
+  "line-height": mapVals({tight:1.1,normal:1.5}, v => fnum(v, ["LINE_HEIGHT"])),
+  $extensions: { "com.figma.modeName": "Value" }
+};
+function semantic(map, mode){
+  const out = {};
+  for (const [path, target] of Object.entries(map)) {
+    const parts = path.split("."); let o = out;
+    parts.slice(0, -1).forEach(p => o = o[p] = o[p] || {});
+    o[parts[parts.length - 1]] = falias(target);
+  }
+  out.$extensions = { "com.figma.modeName": mode };
+  return out;
+}
+const SAMPLE_LIGHT = semantic({
+  "bg.page":"color.neutral.50","bg.raised":"color.neutral.0","bg.sunken":"color.neutral.100","bg.inverse":"color.neutral.900",
+  "text.default":"color.neutral.900","text.muted":"color.neutral.600","text.subtle":"color.neutral.400","text.link":"color.blue.600",
+  "accent.default":"color.blue.500","accent.hover":"color.blue.600","accent.subtle":"color.blue.50",
+  "feedback.success":"color.green.500","feedback.danger":"color.red.500","feedback.warning":"color.amber.500",
+  "border.default":"color.neutral.200"
+}, "Light");
+const SAMPLE_DARK = semantic({
+  "bg.page":"color.neutral.900","bg.raised":"color.neutral.800","bg.sunken":"color.neutral.900","bg.inverse":"color.neutral.50",
+  "text.default":"color.neutral.50","text.muted":"color.neutral.300","text.subtle":"color.neutral.500","text.link":"color.blue.300",
+  "accent.default":"color.blue.400","accent.hover":"color.blue.300","accent.subtle":"color.blue.900",
+  "feedback.success":"color.green.300","feedback.danger":"color.red.300","feedback.warning":"color.amber.500",
+  "border.default":"color.neutral.700"
+}, "Dark");
+const SAMPLE_FILES = [
+  { file: "Primitives.Value.tokens.json", collection: "Primitives", mode: "Value", text: JSON.stringify(SAMPLE_PRIMITIVES, null, 2) },
+  { file: "Semantic.Light.tokens.json", collection: "Semantic", mode: "Light", text: JSON.stringify(SAMPLE_LIGHT, null, 2) },
+  { file: "Semantic.Dark.tokens.json", collection: "Semantic", mode: "Dark", text: JSON.stringify(SAMPLE_DARK, null, 2) }
+];
+
+/* ---------------- Parsing ---------------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+function walk(node, path, inhType, out){
+  if (node === null || node === undefined) return;
+  if (typeof node !== "object" || Array.isArray(node)) {
+    if (path.length) out.push({ name: path.join("."), value: node, type: inhType, ext: null });
+    return;
+  }
+  const type = node.$type || inhType;
+  if ("$value" in node) { out.push({ name: path.join("."), value: node.$value, type: node.$type || inhType, ext: node.$extensions || null }); return; }
+  if ("value" in node && (typeof node.value !== "object" || node.type)) {
+    out.push({ name: path.join("."), value: node.value, type: node.type || type, ext: node.$extensions || node.extensions || null }); return;
+  }
+  for (const k of Object.keys(node)) {
+    if (k.startsWith("$")) continue;
+    walk(node[k], path.concat(k), type, out);
+  }
+}
+
+function parseCSS(text, out){
+  const re = /--([\w-]+)\s*:\s*([^;}{]+)[;}]/g; let m;
+  while ((m = re.exec(text))) out.push({ name: m[1], value: m[2].trim(), type: null, ext: null });
+}
+
+/* One file's text -> raw tokens. Throws a readable error. */
+function parseText(text){
+  text = text.trim();
+  const raw = []; let modeName = null;
+  if (!text) return { raw, modeName };
+  if (text[0] === "{" || text[0] === "[") {
+    let obj;
+    try { obj = JSON.parse(text); }
+    catch (e) { throw new Error("isn't valid JSON (" + e.message + ")"); }
+    walk(obj, [], null, raw);
+    const ext = obj && obj.$extensions;
+    modeName = ext && (ext["com.figma.modeName"] || (ext["com.figma"] && ext["com.figma"].modeName)) || null;
+  } else {
+    parseCSS(text, raw);
+    if (!raw.length) throw new Error("has no tokens. Use JSON, or CSS custom properties like --color-blue-500: #3D63E6;");
+  }
+  return { raw, modeName };
+}
+
+/* Resolve aliases across every active collection. raw items carry .collection */
+function resolveAll(raw){
+  const byCol = new Map(), global = new Map();
+  for (const t of raw) {
+    if (!byCol.has(t.collection)) byCol.set(t.collection, new Map());
+    if (!byCol.get(t.collection).has(t.name)) byCol.get(t.collection).set(t.name, t);
+    if (!global.has(t.name)) global.set(t.name, t);
+  }
+  const lookup = (name, col) => (byCol.get(col) && byCol.get(col).get(name)) || global.get(name);
+  const refName = s => {
+    if (typeof s !== "string") return null;
+    let m = s.match(/^\{([^}]+)\}$/); if (m) return m[1];
+    m = s.match(/^var\(\s*--([\w-]+)\s*(?:,[^)]*)?\)$/); if (m) return m[1];
+    return null;
+  };
+  const aliasData = t => {
+    const ad = t.ext && t.ext["com.figma.aliasData"];
+    if (!ad || !ad.targetVariableName) return null;
+    const n = ad.targetVariableName.split("/").join(".");
+    const col = ad.targetVariableSetName;
+    return (col && byCol.get(col) && byCol.get(col).get(n)) || global.get(n) || null;
+  };
+  function follow(t, depth){
+    if (depth > 12) return { value: t.value };
+    const r = refName(t.value);
+    let target = r ? lookup(r, t.collection) : null;
+    if (!target) target = aliasData(t);
+    if (target && target !== t) {
+      const inner = follow(target, depth + 1);
+      return { value: inner.value, aliasOf: inner.aliasOf || target.name, type: t.type || target.type };
+    }
+    if (r) return { value: t.value, broken: r };
+    if (t.value && typeof t.value === "object" && !Array.isArray(t.value) && !("colorSpace" in t.value) && !("unit" in t.value)) {
+      const o = {};
+      for (const k in t.value) {
+        const rn = refName(t.value[k]);
+        const tg = rn ? lookup(rn, t.collection) : null;
+        o[k] = tg ? follow(tg, depth + 1).value : t.value[k];
+      }
+      return { value: o };
+    }
+    return { value: t.value };
+  }
+  const broken = [];
+  const tokens = raw.map(t => {
+    const r = follow(t, 0);
+    if (r.broken) broken.push(t.name);
+    return { name: t.name, raw: t.value, value: r.value, type: t.type || r.type || null, aliasOf: r.aliasOf || null, ext: t.ext, collection: t.collection };
+  });
+  return { tokens, broken };
+}
+
+/* ---------------- Classification ---------------- */
+const colorRe = /^(#[0-9a-f]{3,8}$|rgba?\(|hsla?\(|oklch\(|oklab\(|lab\(|lch\(|hwb\(|color\()/i;
+const skipNameRe = /line-?height|leading|letter-?spacing|tracking|weight|border-?width|stroke|duration|delay|opacity|z-?index|breakpoint|screen|shadow|blur|elevation|easing|ratio|family/i;
+const typeNameRe = /(font|text|type|heading|body|display|caption|title)[\w.\-/]*size|font-?size|fontsize|type-?scale/i;
+const radiusRe = /radius|radii|rounded|corner/i;
+const spaceRe = /space|spacing|gap|gutter|inset|padding|margin|sizing|size|dimension/i;
+const SKIP_SCOPES = ["LINE_HEIGHT","LETTER_SPACING","OPACITY","STROKE_FLOAT","FONT_WEIGHT","EFFECT_FLOAT","PARAGRAPH_SPACING","PARAGRAPH_INDENT","FONT_VARIATIONS","TEXT_CONTENT"];
+
+function toPx(val){
+  if (typeof val === "number" && isFinite(val)) return val;
+  if (val && typeof val === "object" && typeof val.value === "number") return val.unit === "rem" || val.unit === "em" ? val.value * 16 : val.value;
+  if (typeof val !== "string") return null;
+  const m = val.trim().match(/^(-?\d*\.?\d+)\s*(px|rem|em|pt)?$/i);
+  if (!m) return null;
+  const n = parseFloat(m[1]); const u = (m[2] || "px").toLowerCase();
+  return u === "rem" || u === "em" ? n * 16 : u === "pt" ? n * 4 / 3 : n;
+}
+
+function colorString(val){
+  if (typeof val === "string") return val.trim();
+  if (val && typeof val === "object") {
+    if (typeof val.hex === "string" && (val.alpha === undefined || val.alpha >= 1)) return val.hex;
+    const a = val.alpha ?? 1, c = val.components;
+    if (Array.isArray(c) && c.length >= 3) {
+      if (!val.colorSpace || val.colorSpace === "srgb") return `rgba(${c.map(x => Math.round(x * 255)).join(",")},${a})`;
+      if (val.colorSpace === "hsl") return `hsl(${c[0]} ${c[1]}% ${c[2]}% / ${a})`;
+      if (val.colorSpace === "oklch") return `oklch(${c[0]} ${c[1]} ${c[2]} / ${a})`;
+      if (val.colorSpace === "display-p3") return `color(display-p3 ${c.join(" ")} / ${a})`;
+    }
+    if (typeof val.hex === "string") return val.hex;
+  }
+  return null;
+}
+
+function scopesOf(t){
+  const e = t.ext; if (!e) return null;
+  const s = e["com.figma.scopes"] || (e["com.figma"] && e["com.figma"].scopes) || e.scopes;
+  return Array.isArray(s) && s.length && !s.includes("ALL_SCOPES") ? s : null;
+}
+
+function classify(t){
+  const n = t.name, ty = (t.type || "").toLowerCase(), val = t.value;
+  if (ty === "typography" || (val && typeof val === "object" && ("fontSize" in val || "font-size" in val))) {
+    const px = toPx(val && (val.fontSize ?? val["font-size"]));
+    return px != null ? { cat: "type", px } : { cat: "skip" };
+  }
+  if (ty === "shadow" || ty === "boxshadow") return { cat: "skip" };
+  const cs = colorString(val);
+  if (cs && (ty === "color" || colorRe.test(cs)) && window.CSS && CSS.supports("color", cs)) return { cat: "color", css: cs };
+  if (ty === "color") return { cat: "skip" };
+  const px = toPx(val);
+  if (px == null) return { cat: "skip" };
+  const scopes = scopesOf(t);
+  if (scopes) {
+    if (scopes.includes("FONT_SIZE")) return { cat: "type", px };
+    if (scopes.includes("CORNER_RADIUS")) return { cat: "radius", px };
+    if (scopes.includes("GAP") || scopes.includes("WIDTH_HEIGHT")) return { cat: "space", px };
+    if (scopes.every(s => SKIP_SCOPES.includes(s))) return { cat: "skip" };
+  }
+  if (/fontsize/.test(ty.replace(/[-_ ]/g, "")) || typeNameRe.test(n)) return { cat: "type", px };
+  if (skipNameRe.test(n) || /lineheight|letterspacing|fontweight|opacity|duration|borderwidth|boolean|string/.test(ty.replace(/[-_ ]/g, ""))) return { cat: "skip" };
+  if (radiusRe.test(n) || /radius/.test(ty)) return { cat: "radius", px };
+  if (spaceRe.test(n)) return { cat: "space", px };
+  if (["spacing","dimension","sizing"].includes(ty)) return { cat: "space", px };
+  return { cat: "skip" };
+}
+
+/* ---------------- Color math ---------------- */
+const cc = document.createElement("canvas"); cc.width = cc.height = 1;
+const cx = cc.getContext("2d", { willReadFrequently: true });
+function cssToRGB(str){
+  cx.clearRect(0,0,1,1); cx.fillStyle = "#000"; cx.fillStyle = str; cx.fillRect(0,0,1,1);
+  const d = cx.getImageData(0,0,1,1).data;
+  return { r: d[0]/255, g: d[1]/255, b: d[2]/255, a: d[3]/255 };
+}
+const lin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+function oklch({ r, g, b }){
+  r = lin(r); g = lin(g); b = lin(b);
+  const l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b);
+  const m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b);
+  const s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
+  const L = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
+  const A = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
+  const B = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+  const C = Math.hypot(A, B); let h = Math.atan2(B, A); if (h < 0) h += Math.PI * 2;
+  return { L, A, B, C, h };
+}
+const toHex = ({ r, g, b }) => "#" + [r,g,b].map(x => Math.round(x * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+const lum = ({ r, g, b }) => 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x,y) + 0.05) / (Math.min(x,y) + 0.05); };
+
+/* ---------------- Model ---------------- */
+const parseCache = new Map();
+function parsed(src){
+  const key = src.id + ":" + src.text.length;
+  if (!parseCache.has(key)) {
+    try { parseCache.set(key, { ok: true, ...parseText(src.text) }); }
+    catch (e) { parseCache.set(key, { ok: false, error: e.message, raw: [] }); }
+  }
+  return parseCache.get(key);
+}
+
+function resolveSources(list){
+  const raw = [], failed = [];
+  for (const s of list) {
+    const p = parsed(s);
+    if (!p.ok) { failed.push(`${s.file} ${p.error}`); continue; }
+    for (const t of p.raw) raw.push({ ...t, collection: s.collection });
+  }
+  return { ...resolveAll(raw), failed };
+}
+
+function colorRecord(t, css){
+  const rgb = cssToRGB(css);
+  return { name: t.name, raw: t.raw, css, rgb, hex: toHex(rgb), ok: oklch(rgb), aliasOf: t.aliasOf, collection: t.collection };
+}
+
+function buildModel(list, allSources){
+  const { tokens, broken, failed } = resolveSources(list);
+  const model = { colors: [], space: [], type: [], radius: [], skipped: 0, total: tokens.length, broken, failed, modeSets: [] };
+  for (const t of tokens) {
+    const c = classify(t);
+    const base = { name: t.name, raw: t.raw, aliasOf: t.aliasOf, collection: t.collection };
+    if (c.cat === "color") model.colors.push(colorRecord(t, c.css));
+    else if (c.cat === "space") model.space.push({ ...base, px: c.px });
+    else if (c.cat === "type") model.type.push({ ...base, px: c.px });
+    else if (c.cat === "radius") model.radius.push({ ...base, px: c.px });
+    else model.skipped++;
+  }
+  model.baseColors = model.colors.filter(c => !c.aliasOf);
+  const byName = new Map(model.baseColors.map(c => [c.name, c]));
+  for (const c of model.colors) if (c.aliasOf) { const b = byName.get(c.aliasOf); if (b) (b.aliases = b.aliases || []).push(c.name); }
+  model.families = families(model.baseColors);
+  model.modeSets = modeSets(list, allSources);
+  return model;
+}
+
+/* For each collection with 2+ modes, resolve its colors once per mode. */
+function modeSets(active, all){
+  const sets = [];
+  for (const col of collectionsOf(all)) {
+    if (col.modes.length < 2) continue;
+    const modes = col.modes.map(m => m.mode);
+    const per = new Map();
+    col.modes.forEach((m, i) => {
+      const list = active.filter(s => s.collection !== col.name).concat(m);
+      const { tokens } = resolveSources(list);
+      for (const t of tokens) {
+        if (t.collection !== col.name) continue;
+        const c = classify(t);
+        if (c.cat !== "color") continue;
+        if (!per.has(t.name)) per.set(t.name, new Array(modes.length).fill(null));
+        per.get(t.name)[i] = colorRecord(t, c.css);
+      }
+    });
+    const tokens = [...per.entries()].filter(([, a]) => a.filter(Boolean).length > 1).map(([name, a]) => ({ name, collection: col.name, modes, per: a }));
+    if (tokens.length) sets.push({ collection: col.name, modes, tokens });
+  }
+  return sets;
+}
+
+function families(colors){
+  const groups = new Map();
+  for (const c of colors) {
+    const parts = c.name.split(/[.\-/_]/).filter(Boolean);
+    let fam, step;
+    if (parts.length > 1) { step = parts[parts.length - 1]; fam = parts.slice(0, -1).join("."); }
+    else { fam = ""; step = c.name; }
+    if (!groups.has(fam)) groups.set(fam, []);
+    groups.get(fam).push({ c, step });
+  }
+  const out = [], loose = [];
+  for (const [fam, items] of groups) {
+    if (items.length < 2 || !fam) { loose.push(...items); continue; }
+    const numeric = items.every(i => /^\d+$/.test(i.step));
+    if (numeric) items.sort((a, b) => +a.step - +b.step);
+    out.push({ name: fam.replace(/^(colou?rs?|palette)\./i, ""), items, numeric });
+  }
+  out.sort((a, b) => (b.numeric - a.numeric) || (b.items.length - a.items.length));
+  if (loose.length) out.push({ name: "Other", items: loose.map(i => ({ c: i.c, step: i.c.name.split(/[.\-/_]/).pop() })), numeric: false });
+  return out;
+}
+
+/* ---------------- Insights ---------------- */
+const SCALES = [[1.067,"minor second"],[1.125,"major second"],[1.2,"minor third"],[1.25,"major third"],[1.333,"perfect fourth"],[1.414,"augmented fourth"],[1.5,"perfect fifth"],[1.618,"golden ratio"]];
+const fmt = (n, d = 0) => Number(n.toFixed(d)).toString();
+const dE = (a, b) => Math.hypot(a.L - b.L, a.A - b.A, a.B - b.B);
+
+function insights(m){
+  const groups = [];
+  const cf = [], base = m.baseColors;
+  if (base.length) {
+    const aliasCount = m.colors.length - base.length;
+    if (aliasCount) cf.push({ t: `${aliasCount} semantic tokens point to existing colors and share their positions in the view.` });
+    const pairs = [];
+    for (let i = 0; i < base.length; i++) for (let j = i + 1; j < base.length; j++) {
+      const d = dE(base[i].ok, base[j].ok);
+      if (d < 0.015) pairs.push([base[i], base[j], d]);
+    }
+    pairs.sort((a, b) => a[2] - b[2]);
+    pairs.slice(0, 6).forEach(([a, b, d]) => cf.push({ flag: true, t: `<code>${esc(a.name)}</code> and <code>${esc(b.name)}</code> are nearly identical (ΔE ${d.toFixed(3)}).` }));
+    if (pairs.length > 6) cf.push({ flag: true, t: `${pairs.length - 6} more near-duplicate pairs.` });
+    for (const f of m.families) {
+      if (!f.numeric || f.items.length < 3) continue;
+      const Ls = f.items.map(i => i.c.ok.L);
+      const dir = Math.sign(Ls[Ls.length - 1] - Ls[0]) || -1;
+      for (let i = 1; i < Ls.length; i++) {
+        if (Math.sign(Ls[i] - Ls[i - 1]) === -dir && Math.abs(Ls[i] - Ls[i - 1]) > 0.005) {
+          cf.push({ flag: true, t: `In <code>${esc(f.name)}</code>, step ${esc(f.items[i].step)} is ${dir < 0 ? "lighter" : "darker"} than ${esc(f.items[i - 1].step)}, breaking the lightness ramp.` });
+        }
+      }
+    }
+    const chromatic = base.filter(c => c.ok.C > 0.04);
+    if (chromatic.length) {
+      const sectors = new Set(chromatic.map(c => Math.floor((c.ok.h * 180 / Math.PI) / 30) % 12));
+      cf.push({ t: `Chromatic colors occupy ${sectors.size} of 12 hue sectors (30° each).` });
+    }
+    if (!cf.some(x => x.flag)) cf.push({ t: "No near-duplicates or broken lightness ramps." });
+    groups.push(["Color", cf]);
+  }
+  for (const set of m.modeSets) {
+    const mf = [], n = set.tokens.length;
+    const same = set.tokens.filter(t => { const p = t.per.filter(Boolean); return p.every(x => dE(x.ok, p[0].ok) < 0.002); });
+    mf.push(same.length
+      ? { flag: same.length > 0 && same.length < n, t: `${same.length} of ${n} tokens keep the same value in every mode${same.length <= 3 ? ": " + same.map(t => `<code>${esc(t.name)}</code>`).join(", ") : ""}.` }
+      : { t: `All ${n} tokens change between modes.` });
+    let big = null;
+    for (const t of set.tokens) {
+      const p = t.per.filter(Boolean);
+      const sw = Math.max(...p.map(x => x.ok.L)) - Math.min(...p.map(x => x.ok.L));
+      if (!big || sw > big.sw) big = { t, sw, p };
+    }
+    if (big && big.sw > 0.01) mf.push({ t: `Largest lightness swing: <code>${esc(big.t.name)}</code> moves ${big.sw.toFixed(2)} in L across ${set.modes.map(esc).join(" and ")}.` });
+    groups.push([`${esc(set.collection)} modes`, mf]);
+  }
+  if (m.space.length) {
+    const sf = [];
+    const nonZero = m.space.filter(s => s.px > 0 && !s.aliasOf);
+    const grid = [8, 4].find(g => nonZero.length && nonZero.every(s => s.px % g === 0));
+    if (grid) sf.push({ t: `Every spacing value sits on a ${grid}px grid.` });
+    else {
+      const off = nonZero.filter(s => s.px % 4 !== 0);
+      sf.push({ flag: true, t: `${off.length} value${off.length > 1 ? "s" : ""} off the 4px grid: ${off.slice(0, 5).map(s => `<code>${esc(s.name)}</code> (${fmt(s.px, 1)}px)`).join(", ")}.` });
+    }
+    const seen = new Map();
+    for (const s of m.space) { if (s.aliasOf) continue; seen.set(s.px, (seen.get(s.px) || []).concat(s.name)); }
+    for (const [px, names] of seen) if (names.length > 1) sf.push({ flag: true, t: `${names.length} tokens share ${fmt(px, 1)}px: ${names.slice(0, 3).map(n => `<code>${esc(n)}</code>`).join(", ")}.` });
+    groups.push(["Spacing", sf]);
+  }
+  const sizes = [...new Set(m.type.map(t => t.px))].filter(x => x > 0).sort((a, b) => a - b);
+  if (sizes.length > 1) {
+    const tf = [], ratios = [];
+    for (let i = 1; i < sizes.length; i++) ratios.push(sizes[i] / sizes[i - 1]);
+    const mean = Math.exp(ratios.reduce((s, r) => s + Math.log(r), 0) / ratios.length);
+    const near = SCALES.reduce((a, b) => Math.abs(b[0] - mean) < Math.abs(a[0] - mean) ? b : a);
+    const spread = Math.max(...ratios) - Math.min(...ratios);
+    tf.push({ t: `${sizes.length} sizes from ${fmt(sizes[0], 1)} to ${fmt(sizes[sizes.length - 1], 1)}px, average step ×${mean.toFixed(3)}, closest to a ${near[1]} (${near[0]}).` });
+    tf.push(spread > 0.12
+      ? { flag: true, t: `Steps vary from ×${Math.min(...ratios).toFixed(2)} to ×${Math.max(...ratios).toFixed(2)}, so the scale isn't strictly modular.` }
+      : { t: "Steps are close to a consistent ratio." });
+    groups.push(["Type scale", tf]);
+  }
+  if (m.radius.length) {
+    const rf = [], pill = m.radius.filter(r => r.px >= 999);
+    const rest = m.radius.filter(r => r.px < 999).map(r => r.px).sort((a, b) => a - b);
+    if (rest.length) rf.push({ t: `Corners run from ${fmt(rest[0], 1)} to ${fmt(rest[rest.length - 1], 1)}px across ${rest.length} steps.` });
+    if (pill.length) rf.push({ t: `<code>${esc(pill[0].name)}</code> is a full pill radius.` });
+    groups.push(["Radius", rf]);
+  }
+  return groups;
+}
+
+function renderInsights(m){
+  const el = document.getElementById("insights");
+  const g = insights(m);
+  el.innerHTML = `<h2>What the shape shows</h2>
+    <div class="counts">
+      <div><b>${m.baseColors.length}</b><span>colors</span></div>
+      <div><b>${m.space.length}</b><span>spacing</span></div>
+      <div><b>${new Set(m.type.map(t => t.px)).size}</b><span>type sizes</span></div>
+      <div><b>${m.radius.length}</b><span>radii</span></div>
+    </div>` +
+    g.map(([title, items]) => `<div class="finding-group"><h3>${title}</h3><ul>${items.map(i => `<li class="${i.flag ? "flag" : ""}"><span>${i.t}</span></li>`).join("")}</ul></div>`).join("");
+}
+
+/* ---------------- Three.js scene ---------------- */
+const canvas = document.getElementById("scene");
+const wrap = document.getElementById("wrap");
+const labelsEl = document.getElementById("labels");
+const tip = document.getElementById("tip");
+const stage = document.getElementById("stage");
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+} catch (e) {
+  document.getElementById("emptyText").textContent = "This browser couldn't start WebGL, which the 3D view needs. Try a current version of Chrome, Safari, Firefox or Edge.";
+  document.getElementById("empty").classList.add("show");
+}
+if (renderer) { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputEncoding = THREE.sRGBEncoding; renderer.setClearColor(0x000000, 0); }
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 1, 6000);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8890a0, 0.85));
+const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(200, 400, 260); scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-300, 120, -200); scene.add(fill);
+
+let group = null, labels = [], pickables = [];
+const orbit = { theta: 0.7, phi: 1.05, radius: 520, target: new THREE.Vector3() };
+let preset = null;
+
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function lineMat(op){ return new THREE.LineBasicMaterial({ color: new THREE.Color(cssVar("--scene-line") || "#8E98A9").convertSRGBToLinear(), transparent: true, opacity: op }); }
+function segs(pts, op = 0.6){ const g = new THREE.BufferGeometry().setFromPoints(pts); return new THREE.LineSegments(g, lineMat(op)); }
+function polyline(pts, op = 0.6){ const g = new THREE.BufferGeometry().setFromPoints(pts); return new THREE.Line(g, lineMat(op)); }
+function ring(r, y, op){ const p = []; for (let i = 0; i <= 96; i++){ const a = i / 96 * Math.PI * 2; p.push(new THREE.Vector3(Math.cos(a) * r, y, -Math.sin(a) * r)); } return polyline(p, op); }
+function colorMat(rgb){
+  const c = new THREE.Color(rgb.r, rgb.g, rgb.b).convertSRGBToLinear();
+  return new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0, emissive: c.clone().multiplyScalar(0.3) });
+}
+function seqColor(t){
+  const a = new THREE.Color("#2F4FE0"), b = new THREE.Color("#79C6F2");
+  return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
+}
+const flagRGB = { r: 0xE0/255, g: 0x86/255, b: 0x2B/255 };
+function label(text, x, y, z, cls = "", extra = ""){
+  const el = document.createElement("div"); el.className = "lbl " + cls; el.textContent = text;
+  labelsEl.appendChild(el); labels.push({ el, pos: new THREE.Vector3(x, y, z), extra });
+}
+function addPick(mesh, data){ mesh.userData = data; pickables.push(mesh); group.add(mesh); }
+
+const sphereGeo = new THREE.SphereGeometry(1, 28, 18);
+const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+
+function oklchGuides(maxC, K, H){
+  group.add(segs([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, H, 0)], 0.8));
+  [0, 0.5, 1].forEach(L => label(`L ${L}`, 0, L * H, 0, "axis"));
+  const rings = [0.1, 0.2, 0.3].concat(maxC > 0.33 ? [0.4] : []);
+  rings.forEach((c, i) => { group.add(ring(c * K, 0, i === rings.length - 1 ? 0.55 : 0.3)); label(`C ${c}`, c * K + 4, 0, 4, "axis"); });
+  const R = rings[rings.length - 1] * K, sp = [];
+  for (let d = 0; d < 360; d += 30) { const a = d * Math.PI / 180; sp.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a) * R, 0, -Math.sin(a) * R)); }
+  group.add(segs(sp, 0.16));
+  [0, 90, 180, 270].forEach(d => { const a = d * Math.PI / 180; label(`${d}°`, Math.cos(a) * (R + 22), 0, -Math.sin(a) * (R + 22), "axis"); });
+  return R;
+}
+const MODE_SHAPES = [
+  ["sphere", sphereGeo],
+  ["diamond", new THREE.OctahedronGeometry(1.35)],
+  ["pyramid", new THREE.TetrahedronGeometry(1.5)],
+  ["cube", new THREE.BoxGeometry(1.5, 1.5, 1.5)]
+];
+const okPos = (ok, K, H) => new THREE.Vector3(Math.cos(ok.h) * ok.C * K, ok.L * H, -Math.sin(ok.h) * ok.C * K);
+
+const VIEWS = {
+  space3d: {
+    title: "Color space", count: m => m.baseColors.length,
+    legend: "OKLCH perceptual space. Height is lightness, distance from the center is chroma, and the angle around the axis is hue.",
+    empty: "No color tokens found. Colors are read from tokens typed color or with hex, rgb(), hsl() or oklch() values.",
+    build(m){
+      const K = 420, H = 170, base = m.baseColors;
+      const r = base.length > 140 ? 2.6 : base.length > 70 ? 3.4 : 4.4;
+      const maxC = Math.max(0.3, ...base.map(c => c.ok.C));
+      const drops = [];
+      for (const c of base) {
+        const x = Math.cos(c.ok.h) * c.ok.C * K, z = -Math.sin(c.ok.h) * c.ok.C * K, y = c.ok.L * H;
+        const s = new THREE.Mesh(sphereGeo, colorMat(c.rgb)); s.position.set(x, y, z); s.scale.setScalar(r);
+        addPick(s, { kind: "color", tok: c, base: r });
+        drops.push(new THREE.Vector3(x, y, z), new THREE.Vector3(x, 0, z));
+      }
+      group.add(segs(drops, 0.28));
+      const R = oklchGuides(maxC, K, H);
+      return { target: [0, H * 0.45, 0], theta: 0.75, phi: 1.08, radius: R * 2.6 + 160 };
+    }
+  },
+  ramps: {
+    title: "Color ramps", count: m => m.baseColors.length,
+    legend: "Each row is a color family and each tower is a step. Tower height is perceptual lightness, so a clean ramp reads as a smooth slope.",
+    empty: "No color tokens found. Colors are read from tokens typed color or with hex, rgb(), hsl() or oklch() values.",
+    build(m){
+      const fams = m.families, dx = 20, dz = 28, w = 14, Hh = 90;
+      const cols = Math.max(...fams.map(f => f.items.length));
+      const ox = -(cols - 1) * dx / 2, oz = -(fams.length - 1) * dz / 2;
+      const many = fams.reduce((s, f) => s + f.items.length, 0) > 130;
+      fams.forEach((f, i) => {
+        const z = oz + i * dz, tops = [];
+        label(f.name, ox - 16, 0, z, "row", "translateX(-100%)");
+        f.items.forEach((it, j) => {
+          const x = ox + j * dx, h = Math.max(1.5, it.c.ok.L * Hh);
+          const b = new THREE.Mesh(boxGeo, colorMat(it.c.rgb)); b.scale.set(w, h, w); b.position.set(x, h / 2, z);
+          addPick(b, { kind: "color", tok: it.c });
+          tops.push(new THREE.Vector3(x, h + 0.6, z));
+          if (!many) label(String(it.step).slice(0, 8), x, 0, z + w / 2 + 3, "");
+        });
+        if (f.numeric && tops.length > 1) group.add(polyline(tops, 0.7));
+      });
+      const span = Math.max(cols * dx, fams.length * dz);
+      return { target: [0, 20, 0], theta: 0.42, phi: 0.98, radius: span * 1.35 + 160 };
+    }
+  },
+  modes: {
+    title: "Mode shift", count: m => m.modeSets.reduce((n, s) => n + s.tokens.length, 0),
+    legend: "",
+    empty: "No multi-mode collections yet. Drop a collection exported with two or more modes, such as Light and Dark, to see how each token moves between them.",
+    build(m){
+      const K = 420, H = 170;
+      const all = m.modeSets.flatMap(s => s.tokens);
+      const maxC = Math.max(0.3, ...all.flatMap(t => t.per.filter(Boolean).map(p => p.ok.C)));
+      const r = all.length > 60 ? 3 : 4;
+      const links = [];
+      for (const t of all) {
+        const pts = [];
+        t.per.forEach((p, i) => {
+          if (!p) return;
+          const pos = okPos(p.ok, K, H);
+          const geo = MODE_SHAPES[i % MODE_SHAPES.length][1];
+          const mesh = new THREE.Mesh(geo, colorMat(p.rgb)); mesh.position.copy(pos); mesh.scale.setScalar(r);
+          addPick(mesh, { kind: "mode", tok: t, at: i });
+          pts.push(pos);
+        });
+        for (let i = 1; i < pts.length; i++) links.push(pts[i - 1], pts[i]);
+      }
+      group.add(segs(links, 0.5));
+      const R = oklchGuides(maxC, K, H);
+      const shapes = m.modeSets[0].modes.map((md, i) => `${MODE_SHAPES[i % MODE_SHAPES.length][0]} for ${esc(md)}`);
+      const html = `Each token appears once per mode in OKLCH space, and a line joins its positions. A long vertical line means the token flips lightness; a short one means it barely changes.<span class="legend-shapes">${shapes.map(x => `<span>${x}</span>`).join("")}</span>`;
+      return { target: [0, H * 0.45, 0], theta: 0.75, phi: 1.08, radius: R * 2.6 + 160, legendHTML: html };
+    }
+  },
+  spacing: {
+    title: "Spacing", count: m => m.space.length,
+    legend: "Spacing and size tokens in ascending order. Bar height is the value in pixels; amber bars are off the 4px grid.",
+    empty: "No spacing tokens found. Spacing is read from dimension tokens named space, gap, padding, margin, inset or size.",
+    build(m){
+      const items = [...m.space].sort((a, b) => a.px - b.px || a.name.localeCompare(b.name));
+      const max = Math.max(...items.map(s => s.px), 1), sc = 160 / max, w = 12, gap = 9;
+      const n = items.length, ox = -(n - 1) * (w + gap) / 2;
+      items.forEach((s, i) => {
+        const x = ox + i * (w + gap), h = Math.max(0.8, s.px * sc);
+        const off = s.px > 0 && s.px % 4 !== 0;
+        const b = new THREE.Mesh(boxGeo, colorMat(off ? flagRGB : seqColor(n > 1 ? i / (n - 1) : 0)));
+        b.scale.set(w, h, w); b.position.set(x, h / 2, 0);
+        addPick(b, { kind: "space", tok: s });
+        label(fmt(s.px, 1), x, h + 4, 0, "val", "translate(-50%,-100%)");
+        if (n <= 28) label(s.name.split(/[.]/).slice(-2).join("."), x, 0, w / 2 + 2, "", "rotate(40deg)");
+      });
+      group.add(segs([new THREE.Vector3(ox - 20, 0, 0), new THREE.Vector3(-ox + 20, 0, 0)], 0.5));
+      return { target: [0, 60, 0], theta: 0.28, phi: 1.22, radius: Math.max(n * (w + gap) * 1.15, 300) + 120 };
+    }
+  },
+  type: {
+    title: "Type scale", count: m => new Set(m.type.map(t => t.px)).size,
+    legend: "Font sizes stacked largest to smallest. Plate width is the size, so the profile of the stack is the curve of your type scale.",
+    empty: "No type sizes found. Sizes are read from typography tokens or dimensions named font-size, text size or type scale.",
+    build(m){
+      const by = new Map();
+      for (const t of m.type) by.set(t.px, (by.get(t.px) || []).concat(t));
+      const sizes = [...by.keys()].filter(x => x > 0).sort((a, b) => b - a);
+      const max = sizes[0] || 1, step = 13, th = 4;
+      sizes.forEach((px, i) => {
+        const s = Math.max(10, px / max * 220), y = i * step;
+        const n = sizes.length;
+        const p = new THREE.Mesh(boxGeo, colorMat(seqColor(n > 1 ? i / (n - 1) : 0)));
+        p.scale.set(s, th, s); p.position.set(0, y + th / 2, 0);
+        const names = by.get(px);
+        addPick(p, { kind: "type", tok: { name: names.map(x => x.name).join(", "), px, raw: names[0].raw, list: names } });
+        label(`${fmt(px, 1)}px  ${names[0].name.split(".").pop()}${names.length > 1 ? " +" + (names.length - 1) : ""}`, s / 2 + 6, y + th / 2, s / 2, "val", "translateY(-50%)");
+      });
+      return { target: [0, sizes.length * step / 2, 0], theta: 0.78, phi: 1.12, radius: 560 };
+    }
+  },
+  radius: {
+    title: "Radius", count: m => m.radius.length,
+    legend: "Each tile is a 120px square drawn with its corner radius, so you can compare how round each step really feels.",
+    empty: "No radius tokens found. Radii are read from dimension tokens named radius, rounded or corner.",
+    build(m){
+      const items = [...m.radius].sort((a, b) => a.px - b.px);
+      const S = 60, gap = 34, cols = Math.ceil(Math.sqrt(items.length * 1.6)), rows = Math.ceil(items.length / cols);
+      const ox = -(cols - 1) * (S + gap) / 2, oz = -(rows - 1) * (S + gap + 14) / 2;
+      items.forEach((r, i) => {
+        const cxp = ox + (i % cols) * (S + gap), czp = oz + Math.floor(i / cols) * (S + gap + 14);
+        const rad = Math.min(r.px / 2, S / 2 - 0.01), h = S / 2, sh = new THREE.Shape();
+        if (rad < 0.05) { sh.moveTo(-h, -h); sh.lineTo(h, -h); sh.lineTo(h, h); sh.lineTo(-h, h); sh.lineTo(-h, -h); }
+        else {
+          sh.moveTo(-h + rad, -h); sh.lineTo(h - rad, -h); sh.quadraticCurveTo(h, -h, h, -h + rad);
+          sh.lineTo(h, h - rad); sh.quadraticCurveTo(h, h, h - rad, h);
+          sh.lineTo(-h + rad, h); sh.quadraticCurveTo(-h, h, -h, h - rad);
+          sh.lineTo(-h, -h + rad); sh.quadraticCurveTo(-h, -h, -h + rad, -h);
+        }
+        const g = new THREE.ExtrudeGeometry(sh, { depth: 8, bevelEnabled: false, curveSegments: 14 });
+        const mesh = new THREE.Mesh(g, colorMat(seqColor(items.length > 1 ? i / (items.length - 1) : 0)));
+        mesh.rotation.x = -Math.PI / 2; mesh.position.set(cxp, 0, czp);
+        addPick(mesh, { kind: "radius", tok: r });
+        label(`${r.name.split(".").pop()}  ${r.px >= 999 ? "full" : fmt(r.px, 1) + "px"}`, cxp, 0, czp + h + 10, "val", "translateX(-50%)");
+      });
+      return { target: [0, 0, 6], theta: 0, phi: 0.72, radius: Math.max(cols, rows) * (S + gap) * 1.7 + 160 };
+    }
+  }
+};
+const ORDER = ["space3d", "ramps", "modes", "spacing", "type", "radius"];
+
+let model = null, current = "space3d";
+
+function clearScene(){
+  if (group) {
+    scene.remove(group);
+    group.traverse(o => { if (o.geometry && o.geometry !== sphereGeo && o.geometry !== boxGeo) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  }
+  group = new THREE.Group(); scene.add(group);
+  labels = []; pickables = []; labelsEl.innerHTML = "";
+  hideTip(true);
+}
+
+function showView(id){
+  current = id;
+  document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-selected", b.dataset.id === id));
+  const V = VIEWS[id];
+  clearScene();
+  document.getElementById("legend").textContent = V.legend;
+  const has = model && V.count(model) > 0;
+  document.getElementById("empty").classList.toggle("show", !has);
+  document.getElementById("emptyText").textContent = V.empty;
+  if (!has || !renderer) return;
+  preset = V.build(model);
+  if (preset.legendHTML) document.getElementById("legend").innerHTML = preset.legendHTML;
+  resetView();
+}
+
+function resetView(){
+  if (!preset) return;
+  orbit.theta = preset.theta; orbit.phi = preset.phi; orbit.radius = preset.radius;
+  orbit.target.set(...preset.target);
+}
+
+function renderTabs(){
+  const nav = document.getElementById("views");
+  nav.innerHTML = ORDER.map(id => {
+    const n = model ? VIEWS[id].count(model) : 0;
+    return `<button role="tab" type="button" data-id="${id}" aria-selected="${id === current}">${VIEWS[id].title}<small>${n}</small></button>`;
+  }).join("");
+  nav.querySelectorAll("button").forEach(b => b.addEventListener("click", () => showView(b.dataset.id)));
+}
+
+/* ---------------- Camera + interaction ---------------- */
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let spin = !reduced;
+const spinBtn = document.getElementById("spinBtn");
+function setSpin(on){ spin = on; spinBtn.setAttribute("aria-pressed", on); }
+setSpin(spin);
+spinBtn.addEventListener("click", () => setSpin(!spin));
+document.getElementById("resetBtn").addEventListener("click", resetView);
+
+function applyCamera(){
+  const { theta, phi, radius, target } = orbit;
+  camera.position.set(
+    target.x + radius * Math.sin(phi) * Math.sin(theta),
+    target.y + radius * Math.cos(phi),
+    target.z + radius * Math.sin(phi) * Math.cos(theta));
+  camera.lookAt(target);
+}
+const clampPhi = p => Math.max(0.06, Math.min(Math.PI / 2 + 0.35, p));
+function pan(dx, dy){
+  const right = new THREE.Vector3(), up = new THREE.Vector3();
+  camera.matrix.extractBasis(right, up, new THREE.Vector3());
+  const k = orbit.radius * 0.0016;
+  orbit.target.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+}
+
+const pointers = new Map(); let moved = 0, pinchD = 0, panning = false;
+canvas.addEventListener("pointerdown", e => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  moved = 0; panning = e.shiftKey || e.button === 2;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinchD = Math.hypot(a.x - b.x, a.y - b.y); }
+  canvas.classList.add("dragging");
+});
+canvas.addEventListener("pointermove", e => {
+  const p = pointers.get(e.pointerId);
+  if (!p) { hover(e); return; }
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+  if (moved > 4) { setSpin(false); if (!tip.classList.contains("pinned")) hideTip(); }
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinchD) orbit.radius = Math.max(60, Math.min(4000, orbit.radius * pinchD / d));
+    pinchD = d; return;
+  }
+  if (panning) pan(dx, dy);
+  else { orbit.theta -= dx * 0.0075; orbit.phi = clampPhi(orbit.phi - dy * 0.0075); }
+});
+function endPointer(e){
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchD = 0;
+  if (!pointers.size) canvas.classList.remove("dragging");
+  if (moved <= 4 && e.type === "pointerup") click(e);
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("wheel", e => {
+  e.preventDefault(); setSpin(false);
+  orbit.radius = Math.max(60, Math.min(4000, orbit.radius * Math.exp(e.deltaY * 0.0012)));
+}, { passive: false });
+canvas.addEventListener("keydown", e => {
+  const k = e.key; let used = true;
+  if (k === "ArrowLeft") orbit.theta += 0.12; else if (k === "ArrowRight") orbit.theta -= 0.12;
+  else if (k === "ArrowUp") orbit.phi = clampPhi(orbit.phi - 0.1); else if (k === "ArrowDown") orbit.phi = clampPhi(orbit.phi + 0.1);
+  else if (k === "+" || k === "=") orbit.radius *= 0.88; else if (k === "-" || k === "_") orbit.radius *= 1.12;
+  else if (k === "Escape") hideTip(true); else used = false;
+  if (used) { e.preventDefault(); setSpin(false); }
+});
+canvas.addEventListener("pointerleave", () => { if (!tip.classList.contains("pinned")) hideTip(); });
+
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let hovered = null;
+function pick(e){
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(pickables, false)[0];
+  return hit ? hit.object : null;
+}
+function setHover(obj){
+  if (hovered === obj) return;
+  if (hovered) { hovered.material.emissive.copy(hovered.userData._em); }
+  hovered = obj;
+  if (obj) { obj.userData._em = obj.userData._em || obj.material.emissive.clone(); obj.material.emissive.copy(obj.userData._em).addScalar(0.12); }
+}
+function hover(e){
+  if (tip.classList.contains("pinned")) return;
+  const obj = pick(e); setHover(obj);
+  canvas.style.cursor = obj ? "pointer" : "";
+  if (obj) showTip(obj.userData, e); else hideTip();
+}
+function click(e){
+  const obj = pick(e);
+  if (!obj) { hideTip(true); return; }
+  setHover(obj); showTip(obj.userData, e); tip.classList.add("pinned");
+}
+
+const white = { r: 1, g: 1, b: 1 }, black = { r: 0, g: 0, b: 0 };
+function rawText(raw){ return typeof raw === "object" ? JSON.stringify(raw) : String(raw); }
+function showTip(d, e){
+  const t = d.tok; let html = "";
+  if (d.kind === "mode") {
+    html = `<div class="t-name">${esc(t.name)}</div><div class="note" style="margin:-2px 0 8px">${esc(t.collection)}</div><dl class="modes-dl">` +
+      t.modes.map((md, i) => {
+        const p = t.per[i]; if (!p) return "";
+        return `<dt>${i === d.at ? "<b>" + esc(md) + "</b>" : esc(md)}</dt><dd><span class="sw sm" style="background:${esc(p.hex)}"></span>${p.hex} L ${p.ok.L.toFixed(2)}${p.aliasOf ? " → " + esc(p.aliasOf) : ""}</dd>`;
+      }).join("") + `</dl>`;
+  } else if (d.kind === "color") {
+    const o = t.ok;
+    html = `<div class="t-name"><span class="sw" style="background:${esc(t.hex)}"></span>${esc(t.name)}</div><dl>
+      <dt>Value</dt><dd>${esc(rawText(t.raw))}</dd>
+      ${String(t.raw).toUpperCase() !== t.hex ? `<dt>Hex</dt><dd>${t.hex}</dd>` : ""}
+      <dt>OKLCH</dt><dd>${o.L.toFixed(3)} ${o.C.toFixed(3)} ${Math.round(o.h * 180 / Math.PI)}°</dd>
+      <dt>On white</dt><dd>${contrast(t.rgb, white).toFixed(2)}:1</dd>
+      <dt>On black</dt><dd>${contrast(t.rgb, black).toFixed(2)}:1</dd></dl>
+      ${t.aliases ? `<div class="note">Also used as ${t.aliases.slice(0, 4).map(esc).join(", ")}${t.aliases.length > 4 ? ` and ${t.aliases.length - 4} more` : ""}</div>` : ""}`;
+  } else {
+    const label = d.kind === "type" ? "Font size" : d.kind === "radius" ? "Radius" : "Value";
+    html = `<div class="t-name">${esc(d.kind === "type" ? t.list[0].name : t.name)}</div><dl>
+      <dt>${label}</dt><dd>${t.px >= 999 && d.kind === "radius" ? "full (" + fmt(t.px) + "px)" : fmt(t.px, 2) + "px"}</dd>
+      <dt>Raw</dt><dd>${esc(rawText(t.raw))}</dd>
+      ${t.aliasOf ? `<dt>Alias of</dt><dd>${esc(t.aliasOf)}</dd>` : ""}</dl>
+      ${d.kind === "type" && t.list.length > 1 ? `<div class="note">Shared by ${t.list.slice(1, 5).map(x => esc(x.name)).join(", ")}</div>` : ""}`;
+  }
+  tip.innerHTML = html; tip.classList.add("show");
+  const r = stage.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = e.clientX - r.left + 16, y = e.clientY - r.top + 16;
+  if (x + tw > r.width - 8) x = e.clientX - r.left - tw - 16;
+  if (y + th > r.height - 8) y = Math.max(8, r.height - th - 8);
+  tip.style.transform = `translate(${Math.max(8, x)}px,${y}px)`;
+}
+function hideTip(force){
+  if (force) tip.classList.remove("pinned");
+  if (tip.classList.contains("pinned")) return;
+  tip.classList.remove("show"); setHover(null);
+}
+
+/* ---------------- Loop ---------------- */
+function resize(){
+  if (!renderer) return;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(wrap);
+
+const pv = new THREE.Vector3();
+function frame(){
+  requestAnimationFrame(frame);
+  if (!renderer) return;
+  if (spin) orbit.theta += 0.0016;
+  applyCamera();
+  renderer.render(scene, camera);
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  for (const l of labels) {
+    pv.copy(l.pos).project(camera);
+    if (pv.z > 1 || pv.z < -1) { l.el.style.display = "none"; continue; }
+    l.el.style.display = "";
+    l.el.style.transform = `translate(${((pv.x + 1) / 2 * w).toFixed(1)}px,${((1 - pv.y) / 2 * h).toFixed(1)}px) ${l.extra}`;
+  }
+}
+
+/* ---------------- Sources: Figma exports, files, paste ---------------- */
+const src = document.getElementById("src"), status = document.getElementById("status");
+const colsEl = document.getElementById("cols"), drop = document.getElementById("drop");
+function store(k, val){ try { localStorage.setItem(k, val); return true; } catch (e) { return false; } }
+function load(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+let sources = [];            // {id, file, collection, mode, text}
+let modeSel = {};            // collection -> active mode
+let nextId = 1;
+const PASTE = "Pasted tokens";
+
+function collectionsOf(list){
+  const out = new Map();
+  for (const s of list) {
+    if (!out.has(s.collection)) out.set(s.collection, { name: s.collection, modes: [] });
+    out.get(s.collection).modes.push(s);
+  }
+  return [...out.values()];
+}
+function allSources(){
+  const list = sources.slice();
+  if (src.value.trim()) list.push({ id: "paste", file: "Pasted tokens", collection: PASTE, mode: "Default", text: src.value });
+  return list;
+}
+function activeSources(){
+  return collectionsOf(allSources()).map(c => c.modes.find(m => m.mode === modeSel[c.name]) || c.modes[0]);
+}
+
+const stripExt = n => n.replace(/\.tokens\.json$|\.json$|\.css$|\.txt$|\.tokens$/i, "");
+function topKeys(text){
+  try { const o = JSON.parse(text); return Object.keys(o).filter(k => !k.startsWith("$")); } catch (e) { return []; }
+}
+
+/* Work out collection + mode for each incoming file. */
+function ingest(files){
+  const pending = files.map(f => {
+    let mode = null;
+    try { mode = parseText(f.text).modeName; } catch (e) {}
+    const base = stripExt(f.name.split("/").pop());
+    const parts = base.split(".");
+    let collection = f.collectionHint || null;
+    if (!collection && parts.length > 1) { collection = parts.slice(0, -1).join("."); mode = mode || parts[parts.length - 1]; }
+    return { ...f, base, collection, mode: mode || (f.collectionHint ? base : null) };
+  });
+  // Files with no collection clue: group by identical token names (same collection, different modes).
+  const loose = pending.filter(p => !p.collection);
+  const bySig = new Map();
+  for (const p of loose) {
+    let sig = "";
+    try { const r = parseText(p.text).raw; sig = r.map(t => t.name).sort().join("|"); } catch (e) { sig = p.base; }
+    if (!bySig.has(sig)) bySig.set(sig, []);
+    bySig.get(sig).push(p);
+  }
+  for (const grp of bySig.values()) {
+    const keys = topKeys(grp[0].text).slice(0, 3).join(", ");
+    const name = grp.length > 1 ? (keys || grp[0].base) : grp[0].base;
+    grp.forEach(p => { p.collection = name; p.mode = p.mode || (grp.length > 1 ? p.base : "Default"); });
+  }
+  let added = 0;
+  for (const p of pending) {
+    const existing = sources.findIndex(s => s.collection === p.collection && s.mode === p.mode);
+    const rec = { id: nextId++, file: p.name.split("/").pop(), collection: p.collection, mode: p.mode, text: p.text };
+    if (existing >= 0) sources[existing] = rec; else sources.push(rec);
+    added++;
+  }
+  return added;
+}
+
+async function readFiles(fileList){
+  const files = [], problems = [];
+  for (const f of fileList) {
+    if (/\.zip$/i.test(f.name)) {
+      if (!window.JSZip) { problems.push(`${f.name} couldn't be opened because the unzip library didn't load. Unzip it and drop the JSON files instead.`); continue; }
+      try {
+        const zip = await JSZip.loadAsync(f);
+        const zipName = stripExt(f.name.replace(/\.zip$/i, ""));
+        const entries = Object.values(zip.files).filter(e => !e.dir && /\.(json|tokens)$/i.test(e.name) && !/__MACOSX|\/\./.test(e.name));
+        for (const e of entries) {
+          const parts = e.name.split("/");
+          const folder = parts.length > 1 ? parts[parts.length - 2] : null;
+          files.push({ name: e.name, text: await e.async("string"), collectionHint: folder || zipName });
+        }
+        if (!entries.length) problems.push(`${f.name} has no JSON files inside.`);
+      } catch (e) { problems.push(`${f.name} isn't a readable ZIP file.`); }
+    } else if (/\.(json|tokens|css|scss|txt)$/i.test(f.name)) {
+      files.push({ name: f.name, text: await f.text() });
+    } else problems.push(`${f.name} was skipped. Drop .json, .zip or .css files.`);
+  }
+  return { files, problems };
+}
+
+async function handleFiles(fileList){
+  if (!fileList || !fileList.length) return;
+  status.textContent = "Reading files…"; status.classList.remove("err");
+  const { files, problems } = await readFiles([...fileList]);
+  const n = ingest(files);
+  persist();
+  run(problems, n);
+}
+
+function persist(){
+  const payload = JSON.stringify({ sources: sources.map(({ file, collection, mode, text }) => ({ file, collection, mode, text })), modeSel });
+  if (payload.length < 3.5e6) store("tokenspace:sources", payload);
+  store("tokenspace:src", src.value);
+}
+
+function renderCollections(){
+  const cols = collectionsOf(allSources());
+  colsEl.innerHTML = cols.map((c, i) => {
+    const counts = c.modes.map(m => parsed(m).raw.length);
+    const bad = c.modes.filter(m => !parsed(m).ok).length;
+    const tk = n => `${n} token${n === 1 ? "" : "s"}`;
+    const meta = bad === c.modes.length ? "Couldn't be read. See the message below."
+      : c.modes.length > 1
+      ? `${c.modes.length} modes, ${tk(Math.max(...counts))}`
+      : `${tk(counts[0])}${c.modes[0].mode !== "Default" ? `, mode ${esc(c.modes[0].mode)}` : ""}`;
+    const sel = c.modes.length > 1
+      ? `<label class="c-mode">Mode <select data-col="${i}">${c.modes.map(m => `<option ${m.mode === (modeSel[c.name] || c.modes[0].mode) ? "selected" : ""}>${esc(m.mode)}</option>`).join("")}</select></label>`
+      : "";
+    return `<li><div class="c-top"><span class="c-name">${esc(c.name)}</span><button type="button" class="link-btn" data-rm="${i}" aria-label="Remove ${esc(c.name)}">Remove</button></div><div class="c-meta">${meta}</div>${sel}</li>`;
+  }).join("");
+  colsEl.hidden = !cols.length;
+  colsEl.querySelectorAll("select").forEach(s => s.addEventListener("change", () => {
+    const c = cols[+s.dataset.col]; modeSel[c.name] = s.value; persist(); run();
+  }));
+  colsEl.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => {
+    const c = cols[+b.dataset.rm];
+    if (c.name === PASTE) src.value = "";
+    sources = sources.filter(s => s.collection !== c.name); delete modeSel[c.name];
+    persist(); run();
+  }));
+}
+
+function run(problems = [], added = 0){
+  renderCollections();
+  const list = activeSources();
+  if (!list.length) {
+    model = null; renderTabs(); showView(current);
+    document.getElementById("insights").innerHTML = "";
+    status.textContent = problems.join(" ") || "Drop your Figma exports to start, or try the sample.";
+    status.classList.toggle("err", !!problems.length);
+    return;
+  }
+  const m = buildModel(list, allSources());
+  const used = m.colors.length + m.space.length + m.type.length + m.radius.length;
+  const msgs = [];
+  if (added) msgs.push(`Added ${added} file${added > 1 ? "s" : ""}.`);
+  if (used) msgs.push(`Plotted ${used} of ${m.total} tokens.`);
+  else if (m.total) msgs.push(`Read ${m.total} tokens but none were colors, spacing, type sizes or radii.`);
+  if (m.skipped && used) msgs.push(`${m.skipped} skipped (line heights, weights, strings and other types).`);
+  if (m.broken.length) msgs.push(`${m.broken.length} alias${m.broken.length > 1 ? "es point" : " points"} to missing tokens, such as ${m.broken[0]}. Drop the collection it comes from to resolve ${m.broken.length > 1 ? "them" : "it"}.`);
+  m.failed.forEach(f => msgs.push(`${f}.`));
+  msgs.push(...problems);
+  status.textContent = msgs.join(" ");
+  status.classList.toggle("err", !used || m.failed.length > 0 || problems.length > 0);
+  model = used ? m : null;
+  if (!model) { renderTabs(); showView(current); document.getElementById("insights").innerHTML = ""; return; }
+  renderInsights(m);
+  if (VIEWS[current].count(m) === 0) current = ORDER.find(id => VIEWS[id].count(m) > 0) || current;
+  renderTabs(); showView(current);
+}
+
+/* Drop zone + pickers */
+const fileIn = document.getElementById("fileIn");
+document.getElementById("fileBtn").addEventListener("click", e => { e.stopPropagation(); fileIn.click(); });
+fileIn.addEventListener("change", () => { handleFiles(fileIn.files).then(() => { fileIn.value = ""; }); });
+drop.addEventListener("click", e => { if (e.target === drop || e.target.closest(".drop-copy")) fileIn.click(); });
+drop.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === drop) { e.preventDefault(); fileIn.click(); } });
+let dragDepth = 0;
+window.addEventListener("dragenter", e => { if ([...(e.dataTransfer?.types || [])].includes("Files")) { dragDepth++; document.body.classList.add("dropping"); } });
+window.addEventListener("dragleave", () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) document.body.classList.remove("dropping"); });
+window.addEventListener("dragover", e => { e.preventDefault(); });
+window.addEventListener("drop", e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove("dropping");
+  if (e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+document.getElementById("sampleBtn").addEventListener("click", e => {
+  e.stopPropagation();
+  sources = SAMPLE_FILES.map(f => ({ id: nextId++, ...f })); modeSel = {}; src.value = "";
+  persist(); run([], 0);
+});
+document.getElementById("go").addEventListener("click", () => { persist(); run(); });
+src.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); persist(); run(); } });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (model) showView(current); });
+
+/* Restore last session, else show the sample */
+(function init(){
+  const saved = load("tokenspace:sources");
+  src.value = load("tokenspace:src") || "";
+  let restored = false;
+  if (saved) {
+    try {
+      const o = JSON.parse(saved);
+      sources = (o.sources || []).map(s => ({ id: nextId++, ...s })); modeSel = o.modeSel || {};
+      restored = sources.length > 0 || !!src.value.trim();
+    } catch (e) {}
+  }
+  if (!restored) sources = SAMPLE_FILES.map(f => ({ id: nextId++, ...f }));
+  if (src.value.trim()) document.getElementById("pasteBox").open = true;
+  resize(); run(); frame();
+})();
+})();
+
+</script>
+</body>
+</html>
